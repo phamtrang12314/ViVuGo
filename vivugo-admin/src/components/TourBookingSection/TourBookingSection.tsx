@@ -24,6 +24,11 @@ interface BookingFormData {
     totalPrice: number;
 }
 
+const toValidPrice = (value: unknown) => {
+    const price = Number(value);
+    return Number.isFinite(price) && price > 0 ? price : null;
+};
+
 export default function TourBookingSection({ tour }: Props) {
     const { isAuthenticated, favoriteIds, addFavoriteId, removeFavoriteId } =
         useContext(AppContext);
@@ -50,12 +55,13 @@ export default function TourBookingSection({ tour }: Props) {
     const children = watch("children");
     const totalPrice = watch("totalPrice");
 
+    const adultPrice = toValidPrice(tour.finalPriceAdult) || toValidPrice(tour.priceAdult) || 0;
+    const childPrice = toValidPrice(tour.finalPriceChild) || toValidPrice(tour.priceChild) || 0;
+
     useEffect(() => {
-        const adultPrice = tour.finalPriceAdult || 0;
-        const childPrice = tour.finalPriceChild || 0;
         const total = adults * adultPrice + children * childPrice;
         setValue("totalPrice", total);
-    }, [adults, children, tour.finalPriceAdult, tour.finalPriceChild, setValue]);
+    }, [adults, children, adultPrice, childPrice, setValue]);
 
     // --- PHẦN SỬA ĐỔI CHÍNH Ở ĐÂY ---
     const handleOpenBookingModal = () => {
@@ -136,7 +142,7 @@ export default function TourBookingSection({ tour }: Props) {
                         Giá người lớn:
                     </span>
                     <span className="font-semibold text-lg text-gray-900">
-                        {formatCurrency(tour.finalPriceAdult)}
+                        {formatCurrency(adultPrice)}
                     </span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -145,10 +151,10 @@ export default function TourBookingSection({ tour }: Props) {
                         Giá trẻ em:
                     </span>
                     <span className="font-semibold text-lg text-gray-900">
-                        {formatCurrency(tour.finalPriceChild)}
+                        {formatCurrency(childPrice)}
                     </span>
                 </div>
-                {tour.priceAdult > tour.finalPriceAdult && (
+                {tour.priceAdult > adultPrice && (
                     <div className="flex justify-between items-center text-sm">
                         <span className="text-gray-500">Giá gốc (người lớn):</span>
                         <span className="text-gray-500 line-through">

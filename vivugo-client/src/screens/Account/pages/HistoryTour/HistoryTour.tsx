@@ -43,6 +43,8 @@ const RefundBadge = ({ status }: { status?: string | null }) => {
 
 export default function HistoryTour() {
   const [confirmBooking, setConfirmBooking] = useState<BookingHistoryResponse | null>(null)
+  const [cancelReason, setCancelReason] = useState('')
+  const [cancelError, setCancelError] = useState('')
 
   const {
     data: historyData,
@@ -139,10 +141,20 @@ export default function HistoryTour() {
                         variant="destructive"
                         className="text-white"
                         size="sm"
-                        onClick={() => setConfirmBooking(booking)}
+                        onClick={() => {
+                          setConfirmBooking(booking)
+                          setCancelReason('')
+                          setCancelError('')
+                        }}
                       >
                         Hủy tour
                       </Button>
+                    )}
+
+                    {booking.cancellationReason && (
+                      <div className="basis-full rounded-lg bg-orange-50 px-3 py-2 text-xs text-orange-800">
+                        <span className="font-semibold">Lý do hủy:</span> {booking.cancellationReason}
+                      </div>
                     )}
 
                     <ReviewButton tourId={booking.tourID} tourTitle={booking.tourTitle} status={booking.status} />
@@ -168,8 +180,32 @@ export default function HistoryTour() {
               Xem chính sách hủy và hoàn tiền
             </Link>
 
+            <label className="mb-2 block text-sm font-semibold text-gray-700" htmlFor="cancel-reason">
+              Lý do hủy tour
+            </label>
+            <textarea
+              id="cancel-reason"
+              value={cancelReason}
+              onChange={(event) => {
+                setCancelReason(event.target.value)
+                setCancelError('')
+              }}
+              rows={4}
+              maxLength={1000}
+              placeholder="Nhập lý do hủy để admin kiểm tra và xử lý..."
+              className="mb-2 w-full resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+            <div className="mb-5 flex items-center justify-between text-xs">
+              <span className="text-red-500">{cancelError}</span>
+              <span className="text-gray-400">{cancelReason.trim().length}/1000</span>
+            </div>
+
             <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setConfirmBooking(null)}>
+              <Button variant="outline" onClick={() => {
+                setConfirmBooking(null)
+                setCancelReason('')
+                setCancelError('')
+              }}>
                 Không
               </Button>
 
@@ -177,8 +213,15 @@ export default function HistoryTour() {
                 variant="destructive"
                 className="text-white"
                 onClick={async () => {
-                  await bookingApi.requestCancelBooking(confirmBooking.bookingID)
+                  const trimmedReason = cancelReason.trim()
+                  if (trimmedReason.length < 5) {
+                    setCancelError('Vui lòng nhập lý do hủy ít nhất 5 ký tự.')
+                    return
+                  }
+                  await bookingApi.requestCancelBooking(confirmBooking.bookingID, trimmedReason)
                   setConfirmBooking(null)
+                  setCancelReason('')
+                  setCancelError('')
                   refetch()
                 }}
               >

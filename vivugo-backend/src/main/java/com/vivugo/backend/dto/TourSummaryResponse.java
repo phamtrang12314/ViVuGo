@@ -11,6 +11,8 @@ import com.vivugo.backend.model.enums.TourStatus;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.time.LocalDate;
+import java.util.Comparator;
 
 public class TourSummaryResponse {
     private String tourID;
@@ -62,12 +64,17 @@ public class TourSummaryResponse {
 
         this.discountPercentage = 0;
         if (tour.getTourPromotions() != null && !tour.getTourPromotions().isEmpty()) {
+            LocalDate today = LocalDate.now();
             Optional<Promotion> activePromo = tour.getTourPromotions().stream()
                     .map(TourPromotion::getPromotion)
                     .filter(p -> p != null
                             && p.getStatus() == PromotionStatus.ACTIVE
-                            && p.getDiscountPercentage() > 0)
-                    .findFirst();
+                            && p.getDiscountPercentage() > 0
+                            && p.getStartDate() != null
+                            && p.getEndDate() != null
+                            && !today.isBefore(p.getStartDate())
+                            && !today.isAfter(p.getEndDate()))
+                    .max(Comparator.comparingDouble(Promotion::getDiscountPercentage));
             if (activePromo.isPresent()) {
                 this.discountPercentage = activePromo.get().getDiscountPercentage();
             }

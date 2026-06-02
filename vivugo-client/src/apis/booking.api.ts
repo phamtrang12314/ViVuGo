@@ -38,8 +38,8 @@ export const bookingApi = {
     // API: GET /api/bookings/history
     return http.get<BookingHistoryResponse[]>('bookings/history')
   },
-  requestCancelBooking: (id: string) => {
-    return http.put(`bookings/${id}/cancel-request`, {})
+  requestCancelBooking: (id: string, reason: string) => {
+    return http.put(`bookings/${id}/cancel-request`, { reason })
   }
 }
 // Thêm function gọi API gửi yêu cầu hủy

@@ -38,6 +38,11 @@ const formatDateLabel = (date: Date | string) => {
   return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`
 }
 
+const toValidPrice = (value: unknown) => {
+  const price = Number(value)
+  return Number.isFinite(price) && price > 0 ? price : null
+}
+
 export default function TourBookingSection({ tour }: Props) {
   const { isAuthenticated } = useContext(AppContext)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -51,7 +56,9 @@ export default function TourBookingSection({ tour }: Props) {
     () => buildDepartureDates(tour.startDate, tour.openDates),
     [tour.startDate, tour.openDates]
   )
-  const totalPrice = adults * (tour.finalPriceAdult || 0) + children * (tour.finalPriceChild || 0)
+  const adultPrice = toValidPrice(tour.finalPriceAdult) || toValidPrice(tour.priceAdult) || 0
+  const childPrice = toValidPrice(tour.finalPriceChild) || toValidPrice(tour.priceChild) || 0
+  const totalPrice = adults * adultPrice + children * childPrice
 
   const increaseAdults = () => {
     setAdults((current) => (current + children >= maxParticipants ? current : current + 1))
@@ -87,7 +94,7 @@ export default function TourBookingSection({ tour }: Props) {
     <div id="booking-panel" className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="bg-[#0f3a8a] p-5 text-white">
         <p className="text-xs font-bold uppercase tracking-wide text-blue-100">Giá từ</p>
-        <p className="mt-1 text-4xl font-black leading-none">{formatCurrency(tour.finalPriceAdult || 0)}</p>
+        <p className="mt-1 text-4xl font-black leading-none">{formatCurrency(adultPrice)}</p>
         <p className="mt-3 text-sm text-blue-100">Mã tour: {tour.tourID}</p>
       </div>
 
@@ -118,7 +125,7 @@ export default function TourBookingSection({ tour }: Props) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-slate-800">Người lớn</p>
-                <p className="text-xs text-slate-500">{formatCurrency(tour.finalPriceAdult || 0)}</p>
+                <p className="text-xs text-slate-500">{formatCurrency(adultPrice)}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button type="button" onClick={decreaseAdults} className="rounded-full border border-slate-200 p-1 hover:bg-slate-50">
@@ -133,7 +140,7 @@ export default function TourBookingSection({ tour }: Props) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-slate-800">Trẻ em</p>
-                <p className="text-xs text-slate-500">{formatCurrency(tour.finalPriceChild || 0)}</p>
+                <p className="text-xs text-slate-500">{formatCurrency(childPrice)}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button type="button" onClick={decreaseChildren} className="rounded-full border border-slate-200 p-1 hover:bg-slate-50">

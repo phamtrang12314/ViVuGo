@@ -69,6 +69,7 @@ export interface BookingHistoryResponse {
     status: BookingStatus;
     paymentStatus: PaymentStatus;
     refundStatus?: RefundStatus | null;
+    cancellationReason?: string | null;
     numAdults: number;
     numChildren: number;
 }

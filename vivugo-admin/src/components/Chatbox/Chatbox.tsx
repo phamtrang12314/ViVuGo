@@ -25,7 +25,7 @@ export default function Chatbox() {
     const [messages, setMessages] = useState<Message[]>([
         {
             role: "bot",
-            content: "Xin ch�o! M�nh l� ViVuGo. B�n mu�n i du l�ch � �u n�o?",
+            content: "Xin chào! Mình là ViVuGo AI. Bạn muốn đi du lịch ở đâu nào?",
         },
     ]);
     const [input, setInput] = useState("");
@@ -54,7 +54,7 @@ export default function Chatbox() {
                 ...prev,
                 {
                     role: "bot",
-                    content: data?.reply || "�y l� k�t qu� m�nh t�m ��c:",
+                    content: data?.reply || "Đây là kết quả mình tìm được:",
                     suggestedTours: data?.tours || []
                 }
             ]);
@@ -135,7 +135,7 @@ export default function Chatbox() {
                                                 {msg.suggestedTours.map((tour, index) => {
                                                     if (!tour) return null;
                                                     const safeId = tour.tourID || (tour as any).tourId || (tour as any).id;
-                                                    const price = tour.finalPrice ? tour.finalPrice.toLocaleString('vi-VN') + '' : 'Li�n h�';
+                                                    const price = tour.finalPrice ? tour.finalPrice.toLocaleString('vi-VN') + 'đ' : 'Liên hệ';
                                                     const img = resolveAssetUrl(tour.imageURL, 'https://placehold.co/400x256?text=Tour');
 
                                                     return (

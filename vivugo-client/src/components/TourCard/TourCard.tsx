@@ -23,6 +23,11 @@ const featuredServiceItems = [
   { icon: UtensilsCrossed, label: 'Ẩm thực', tone: 'bg-rose-50 text-rose-600' }
 ]
 
+const toValidPrice = (value: unknown) => {
+  const price = Number(value)
+  return Number.isFinite(price) && price > 0 ? price : null
+}
+
 export default function TourCard({
   tour,
   isFavoritePage = false,
@@ -41,9 +46,9 @@ export default function TourCard({
   const addFavoriteMutation = useMutation({ mutationFn: favoriteApi.addFavorite })
   const removeFavoriteMutation = useMutation({ mutationFn: favoriteApi.removeFavorite })
 
-  const finalPrice = tour.finalPrice || 0
-  const priceAdult = tour.priceAdult || 0
-  const hasDiscount = finalPrice < priceAdult
+  const priceAdult = toValidPrice(tour.priceAdult) || 0
+  const finalPrice = toValidPrice(tour.finalPrice) || priceAdult
+  const hasDiscount = priceAdult > 0 && finalPrice > 0 && finalPrice < priceAdult
   const averageRating = tour.averageRating || 0
   const reviewCount = tour.reviewCount || 0
   const durationDays = tour.durationDays || 0

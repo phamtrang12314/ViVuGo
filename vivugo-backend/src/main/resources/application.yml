@@ -1,0 +1,98 @@
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:aws}
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:${DB_URL:}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME:}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:}}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${HIBERNATE_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:false}
+    properties:
+      hibernate:
+        format_sql: true
+  cache:
+    type: ${SPRING_CACHE_TYPE:simple}
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      repositories:
+        enabled: false
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:${EMAIL_USER:your_email@gmail.com}}
+    password: ${MAIL_PASSWORD:${EMAIL_PASS:your_app_password}}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          ssl:
+            trust: smtp.gmail.com
+          connectiontimeout: 10000
+          timeout: 10000
+          writetimeout: 10000
+  servlet:
+    multipart:
+      max-file-size: ${SPRING_MULTIPART_MAX_FILE_SIZE:50MB}
+      max-request-size: ${SPRING_MULTIPART_MAX_REQUEST_SIZE:50MB}
+
+server:
+  port: ${SERVER_PORT:${PORT:8081}}
+
+management:
+  health:
+    mail:
+      enabled: false
+    redis:
+      enabled: ${MANAGEMENT_HEALTH_REDIS_ENABLED:false}
+  endpoint:
+    health:
+      show-details: always
+
+app:
+  database:
+    require-aws: ${REQUIRE_AWS_DATABASE:true}
+  cors:
+    allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://127.0.0.1:*}
+  asset-fallback-base-url: ${ASSET_FALLBACK_BASE_URL:http://localhost:5173}
+  rate-limit:
+    enabled: ${APP_RATE_LIMIT_ENABLED:true}
+    window-seconds: ${APP_RATE_LIMIT_WINDOW_SECONDS:60}
+    ai:
+      max-requests: ${APP_RATE_LIMIT_AI_MAX_REQUESTS:30}
+    auth:
+      max-requests: ${APP_RATE_LIMIT_AUTH_MAX_REQUESTS:40}
+    booking-write:
+      max-requests: ${APP_RATE_LIMIT_BOOKING_WRITE_MAX_REQUESTS:30}
+
+jwt:
+  secret-key: ${JWT_SECRET_KEY:vivugo-secret-key-vivugo-secret-key-vivugo-secret-key-123456}
+  expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+  customer:
+    secret-key: ${JWT_CUSTOMER_SECRET_KEY:vivugo-customer-secret-key-vivugo-customer-secret-key-123456}
+  admin:
+    secret-key: ${JWT_ADMIN_SECRET_KEY:vivugo-admin-secret-key-vivugo-admin-secret-key-123456}
+
+ai:
+  api:
+    key: ${AI_API_KEY:your_openrouter_api_key}
+    url: ${AI_API_URL:https://openrouter.ai/api/v1/chat/completions}
+  model: ${AI_MODEL:openai/gpt-5.4-mini}
+  admin:
+    model: ${AI_ADMIN_MODEL:openai/gpt-5.5}
+
+sepay:
+  api-token: ${SEPAY_API_TOKEN:}
+  account-number: ${SEPAY_ACCOUNT_NUMBER:}
+
+resend:
+  api-key: ${RESEND_API_KEY:}
+  from: ${RESEND_FROM:}
+  from-email: ${RESEND_FROM_EMAIL:}

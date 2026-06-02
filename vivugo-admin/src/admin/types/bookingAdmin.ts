@@ -16,6 +16,7 @@ export interface BookingAdmin {
   finalAmount: number;
   status: BookingStatus;
   paymentStatus: PaymentStatus;
+  cancellationReason?: string | null;
 }
 
 export interface BookingAdminListParams {
@@ -52,6 +53,7 @@ export interface BookingDetailAdmin {
   status: BookingStatus;
   refundStatus?: RefundStatus | null;
   refundedAt?: string | null;
+  cancellationReason?: string | null;
 
   numAdults: number;
   numChildren: number;

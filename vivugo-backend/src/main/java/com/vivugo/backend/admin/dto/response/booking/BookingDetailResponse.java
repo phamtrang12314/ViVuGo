@@ -16,6 +16,7 @@ public class BookingDetailResponse {
     private BookingStatus status;
     private RefundStatus refundStatus;
     private LocalDateTime refundedAt;
+    private String cancellationReason;
 
     private int numAdults;
     private int numChildren;
@@ -71,6 +72,14 @@ public class BookingDetailResponse {
 
     public void setRefundedAt(LocalDateTime refundedAt) {
         this.refundedAt = refundedAt;
+    }
+
+    public String getCancellationReason() {
+        return cancellationReason;
+    }
+
+    public void setCancellationReason(String cancellationReason) {
+        this.cancellationReason = cancellationReason;
     }
 
     public int getNumAdults() {

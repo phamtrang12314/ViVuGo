@@ -8,7 +8,6 @@ import jakarta.mail.internet.InternetAddress;
 import lombok.Builder;
 import lombok.Data;
 import org.springframework.core.env.Environment;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -34,18 +33,9 @@ public class EmailService {
 
     private static final String SENDER_DISPLAY_NAME = "ViVuGo";
 
-    private final JavaMailSender mailSender;
-    private final JavaMailSenderImpl javaMailSenderImpl;
-    private final JavaMailSender javaMailSender;
     private final Environment environment;
 
-    public EmailService(JavaMailSender mailSender,
-                        JavaMailSenderImpl javaMailSenderImpl,
-                        JavaMailSender javaMailSender,
-                        Environment environment) {
-        this.mailSender = mailSender;
-        this.javaMailSenderImpl = javaMailSenderImpl;
-        this.javaMailSender = javaMailSender;
+    public EmailService(Environment environment) {
         this.environment = environment;
     }
 
@@ -321,11 +311,25 @@ public class EmailService {
     }
 
     private boolean sendViaHttpProvider(String toEmail, String subject, String text, String html) {
+        RuntimeException lastHttpProviderError = null;
+
+        String resendApiKey = environment.getProperty("RESEND_API_KEY");
+        if (resendApiKey != null && !resendApiKey.isBlank()) {
+            try {
+                sendResendEmail(resendApiKey, toEmail, subject, text, html);
+                return true;
+            } catch (RuntimeException e) {
+                lastHttpProviderError = e;
+                System.err.println("Resend email provider failed, trying next mail provider: " + e.getMessage());
+            }
+        }
+
         if (hasGmailApiProvider()) {
             try {
                 sendGmailApiEmail(toEmail, subject, text, html);
                 return true;
             } catch (RuntimeException e) {
+                lastHttpProviderError = e;
                 System.err.println("Gmail API email provider failed, trying next mail provider: " + e.getMessage());
             }
         }
@@ -339,18 +343,13 @@ public class EmailService {
                 sendBrevoEmail(brevoApiKey, toEmail, subject, text, html);
                 return true;
             } catch (RuntimeException e) {
+                lastHttpProviderError = e;
                 System.err.println("Brevo email provider failed, trying next mail provider: " + e.getMessage());
             }
         }
 
-        String resendApiKey = environment.getProperty("RESEND_API_KEY");
-        if (resendApiKey != null && !resendApiKey.isBlank()) {
-            try {
-                sendResendEmail(resendApiKey, toEmail, subject, text, html);
-                return true;
-            } catch (RuntimeException e) {
-                System.err.println("Resend email provider failed, trying SMTP fallback: " + e.getMessage());
-            }
+        if (lastHttpProviderError != null) {
+            throw lastHttpProviderError;
         }
 
         return false;
@@ -478,6 +477,7 @@ public class EmailService {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .header("Content-Type", "application/json")
+                    .header("User-Agent", "ViVuGo Backend")
                     .header(authHeader, authValue)
                     .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                     .build();

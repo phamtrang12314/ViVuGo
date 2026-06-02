@@ -43,6 +43,9 @@ public class Booking {
 
     private LocalDateTime refundedAt;
 
+    @Column(length = 1000)
+    private String cancellationReason;
+
     // --- Mối quan hệ ---
 
     @ManyToOne(fetch = FetchType.LAZY)
