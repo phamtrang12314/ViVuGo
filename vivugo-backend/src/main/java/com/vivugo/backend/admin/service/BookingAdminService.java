@@ -15,6 +15,7 @@ import com.vivugo.backend.model.enums.BookingStatus;
 import com.vivugo.backend.model.enums.PaymentStatus;
 import com.vivugo.backend.model.enums.RefundStatus;
 import com.vivugo.backend.repository.BookingRepository;
+import com.vivugo.backend.realtime.RealtimePublisher;
 import com.vivugo.backend.service.EmailService;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
@@ -36,10 +37,12 @@ public class BookingAdminService {
 
     private final BookingRepository bookingRepository;
     private final EmailService emailService;
+    private final RealtimePublisher realtimePublisher;
 
-    public BookingAdminService(BookingRepository bookingRepository, EmailService emailService) {
+    public BookingAdminService(BookingRepository bookingRepository, EmailService emailService, RealtimePublisher realtimePublisher) {
         this.bookingRepository = bookingRepository;
         this.emailService = emailService;
+        this.realtimePublisher = realtimePublisher;
     }
 
     /**
@@ -468,7 +471,8 @@ public class BookingAdminService {
         if (resolvePaymentStatus(booking) == PaymentStatus.SUCCESS && booking.getRefundStatus() == null) {
             booking.setRefundStatus(RefundStatus.PENDING);
         }
-        bookingRepository.save(booking);
+        Booking savedBooking = bookingRepository.save(booking);
+        realtimePublisher.publishBookingEvent("BOOKING_STATUS_CHANGED", savedBooking);
 
         // chuẩn bị data email
         if (booking.getUser() != null && booking.getUser().getEmail() != null) {
@@ -501,7 +505,8 @@ public class BookingAdminService {
             if (resolvePaymentStatus(booking) == PaymentStatus.SUCCESS && booking.getRefundStatus() == null) {
                 booking.setRefundStatus(RefundStatus.PENDING);
             }
-            bookingRepository.save(booking);
+            Booking savedBooking = bookingRepository.save(booking);
+            realtimePublisher.publishBookingEvent("BOOKING_STATUS_CHANGED", savedBooking);
         }
     }
 
@@ -520,7 +525,8 @@ public class BookingAdminService {
 
         booking.setRefundStatus(RefundStatus.REFUNDED);
         booking.setRefundedAt(LocalDateTime.now());
-        bookingRepository.save(booking);
+        Booking savedBooking = bookingRepository.save(booking);
+        realtimePublisher.publishBookingEvent("REFUND_UPDATED", savedBooking);
     }
 
     @Transactional
@@ -536,7 +542,8 @@ public class BookingAdminService {
         booking.setStatus(BookingStatus.CONFIRMED);
         booking.setRefundStatus(null);
         booking.setRefundedAt(null);
-        bookingRepository.save(booking);
+        Booking savedBooking = bookingRepository.save(booking);
+        realtimePublisher.publishBookingEvent("BOOKING_STATUS_CHANGED", savedBooking);
 
     }
 

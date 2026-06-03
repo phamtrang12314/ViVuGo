@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, CheckCircle, Copy, CreditCard, History, Home, Loader2, TimerReset } from 'lucide-react'
 import { bookingApi } from '../../apis/booking.api'
 import { formatCurrency } from '../../utils/utils'
+import { subscribeBookingRealtime } from '../../utils/realtime'
 import Button from '../../components/Button'
 
 const PAYMENT_TIMEOUT_MINUTES = 30
@@ -14,7 +15,7 @@ export default function PaymentScreen() {
   const [timeLeft, setTimeLeft] = useState<number>(0)
   const [isExpired, setIsExpired] = useState(false)
 
-  const { data: bookingData, isLoading } = useQuery({
+  const { data: bookingData, isLoading, refetch } = useQuery({
     queryKey: ['booking', id],
     queryFn: () => bookingApi.getBookingById(id as string),
     enabled: !!id && !isExpired,
@@ -29,6 +30,15 @@ export default function PaymentScreen() {
 
   const booking = bookingData?.data
   const isPaid = booking?.status === 'CONFIRMED' || booking?.paymentStatus === 'SUCCESS'
+
+  useEffect(() => {
+    if (!id) return undefined
+    return subscribeBookingRealtime((event) => {
+      if (event.bookingId === id && (event.type === 'PAYMENT_CONFIRMED' || event.type === 'BOOKING_STATUS_CHANGED')) {
+        refetch()
+      }
+    })
+  }, [id, refetch])
 
   useEffect(() => {
     if (!booking || isPaid) return

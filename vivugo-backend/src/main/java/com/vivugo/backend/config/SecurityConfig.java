@@ -93,6 +93,7 @@ public class SecurityConfig {
                         .requestMatchers("/images/**").permitAll()
                         .requestMatchers("/api/contact-messages").permitAll()
                         .requestMatchers("/api/contact-messages/chat/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
 
                         .requestMatchers("/api/admin/**").hasRole(RoleType.ADMIN.name())
                         .requestMatchers("/", "/api", "/api/health", "/actuator/health", "/error").permitAll()

@@ -21,6 +21,7 @@ import { bookingAdminApi } from "../../apis/bookingAdmin.api";
 import type { BookingDetailAdmin } from "../../types/bookingAdmin";
 import type { BookingStatus } from "@/types/booking.type";
 import type { PaymentStatus } from "@/admin/types/paymentStatus";
+import { subscribeBookingRealtime } from "@/utils/realtime";
 
 const formatCurrency = (value: number) =>
   value.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
@@ -79,6 +80,15 @@ const BookingDetailAdminScreen: React.FC = () => {
       return res.data;
     },
   });
+
+  React.useEffect(() => {
+    if (!id) return undefined;
+    return subscribeBookingRealtime((event) => {
+      if (event.bookingId === id) {
+        refetch();
+      }
+    });
+  }, [id, refetch]);
 
   const handleBack = () => navigate("/admin/bookings");
 

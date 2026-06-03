@@ -9,6 +9,7 @@ import com.vivugo.backend.model.enums.BookingStatus;
 import com.vivugo.backend.model.enums.PaymentStatus;
 import com.vivugo.backend.model.enums.RefundStatus;
 import com.vivugo.backend.repository.*;
+import com.vivugo.backend.realtime.RealtimePublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,19 +35,22 @@ public class BookingService {
     private final PaymentRepository paymentRepository;
     private final InvoiceRepository invoiceRepository;
     private final EmailService emailService;
+    private final RealtimePublisher realtimePublisher;
 
     public BookingService(TourRepository tourRepository,
                           BookingRepository bookingRepository,
                           UserRepository userRepository,
                           PaymentRepository paymentRepository,
                           InvoiceRepository invoiceRepository,
-                          EmailService emailService) {
+                          EmailService emailService,
+                          RealtimePublisher realtimePublisher) {
         this.tourRepository = tourRepository;
         this.bookingRepository = bookingRepository;
         this.userRepository = userRepository;
         this.paymentRepository = paymentRepository;
         this.invoiceRepository = invoiceRepository;
         this.emailService = emailService;
+        this.realtimePublisher = realtimePublisher;
     }
 
     // 1. Logic tạo Booking mới
@@ -108,7 +112,9 @@ public class BookingService {
         booking.setInvoice(invoice);
 
         // Lưu Booking (Cascade sẽ tự lưu Invoice và Participants)
-        return bookingRepository.save(booking);
+        Booking savedBooking = bookingRepository.save(booking);
+        realtimePublisher.publishBookingEvent("BOOKING_CREATED", savedBooking);
+        return savedBooking;
     }
 
     // Helper: Lấy Booking theo ID
@@ -180,6 +186,7 @@ public class BookingService {
         }
 
         Booking savedBooking = bookingRepository.save(booking);
+        realtimePublisher.publishBookingEvent("PAYMENT_CONFIRMED", savedBooking);
         System.out.println("Successfully updated Booking " + bookingId + " to CONFIRMED.");
 
         try {
@@ -322,7 +329,8 @@ public class BookingService {
             booking.setStatus(BookingStatus.CANCELED);
             booking.setRefundStatus(null);
             booking.setRefundedAt(null);
-            bookingRepository.save(booking);
+            Booking savedBooking = bookingRepository.save(booking);
+            realtimePublisher.publishBookingEvent("BOOKING_STATUS_CHANGED", savedBooking);
             return;
         }
 
@@ -334,7 +342,8 @@ public class BookingService {
         if (booking.getStatus() == BookingStatus.PROCESSING || booking.getStatus() == BookingStatus.CONFIRMED) {
             booking.setStatus(BookingStatus.CANCELLATION_REQUESTED);
             booking.setRefundStatus(RefundStatus.PENDING);
-            bookingRepository.save(booking);
+            Booking savedBooking = bookingRepository.save(booking);
+            realtimePublisher.publishBookingEvent("BOOKING_CANCEL_REQUESTED", savedBooking);
             return;
         }
 
@@ -359,6 +368,9 @@ public class BookingService {
 
             if (!unpaidExpiredBookings.isEmpty()) {
                 bookingRepository.saveAll(unpaidExpiredBookings);
+                unpaidExpiredBookings.forEach(booking ->
+                        realtimePublisher.publishBookingEvent("BOOKING_STATUS_CHANGED", booking)
+                );
                 System.out.println("Auto-canceled " + unpaidExpiredBookings.size() + " unpaid bookings after payment timeout.");
             }
         }

@@ -8,6 +8,7 @@ import type { BookingAdmin, BookingAdminListParams } from '../../types/bookingAd
 import type { BookingStatus } from '@/types/booking.type'
 import type { PaymentStatus } from '@/admin/types/paymentStatus'
 import { bookingAdminApi } from '../../apis/bookingAdmin.api'
+import { subscribeBookingRealtime } from '@/utils/realtime'
 
 // helper
 const formatCurrency = (value: number) =>
@@ -109,7 +110,7 @@ const ManageBookingScreen: React.FC = () => {
   const queryParams = parseSearchParams(searchParams)
   const navigate = useNavigate()
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['admin-bookings', queryParams],
     queryFn: () =>
       bookingAdminApi
@@ -135,6 +136,19 @@ const ManageBookingScreen: React.FC = () => {
         })
         .then((res) => res.data)
   })
+
+  React.useEffect(() => {
+    return subscribeBookingRealtime((event) => {
+      if (
+        event.type === 'BOOKING_CREATED' ||
+        event.type === 'BOOKING_CANCEL_REQUESTED' ||
+        event.type === 'BOOKING_STATUS_CHANGED' ||
+        event.type === 'PAYMENT_CONFIRMED'
+      ) {
+        refetch()
+      }
+    })
+  }, [refetch])
 
   const updateParams = (patch: Partial<ParsedBookingParams>) => {
     const merged = omitBy(

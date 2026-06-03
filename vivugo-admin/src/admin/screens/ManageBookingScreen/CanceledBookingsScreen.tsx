@@ -5,6 +5,7 @@ import type { BookingAdmin } from "../../types/bookingAdmin";
 import type { PaymentStatus } from "@/admin/types/paymentStatus";
 import { bookingAdminApi } from "../../apis/bookingAdmin.api";
 import { ArrowLeft, RefreshCw } from "lucide-react";
+import { subscribeBookingRealtime } from "@/utils/realtime";
 
 // helper
 const formatCurrency = (value: number) =>
@@ -47,6 +48,14 @@ const CanceledBookingsScreen: React.FC = () => {
   const bookings: BookingAdmin[] = data?.content || [];
   const totalPages = data?.totalPages || 0;
   const currentPage = data?.number ?? 0;
+
+  React.useEffect(() => {
+    return subscribeBookingRealtime((event) => {
+      if (event.type === "BOOKING_CANCEL_REQUESTED" || event.type === "BOOKING_STATUS_CHANGED") {
+        refetch();
+      }
+    });
+  }, [refetch]);
 
   const handleRefresh = () => {
     refetch();
